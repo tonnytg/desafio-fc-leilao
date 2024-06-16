@@ -6,16 +6,20 @@ import (
 	"fullcycle-auction_go/internal/infra/api/web/validation"
 	"fullcycle-auction_go/internal/usecase/auction_usecase"
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
+	"log"
 	"net/http"
 )
 
 type AuctionController struct {
 	auctionUseCase auction_usecase.AuctionUseCaseInterface
+	logger         *zap.Logger
 }
 
-func NewAuctionController(auctionUseCase auction_usecase.AuctionUseCaseInterface) *AuctionController {
+func NewAuctionController(auctionUseCase auction_usecase.AuctionUseCaseInterface, logger *zap.Logger) *AuctionController {
 	return &AuctionController{
 		auctionUseCase: auctionUseCase,
+		logger:         logger,
 	}
 }
 
@@ -36,6 +40,8 @@ func (u *AuctionController) CreateAuction(c *gin.Context) {
 		c.JSON(restErr.Code, restErr)
 		return
 	}
+
+	log.Println("AuctionController - acionado o CreateAuction")
 
 	c.Status(http.StatusCreated)
 }

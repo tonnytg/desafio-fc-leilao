@@ -18,6 +18,7 @@ func CreateAuction(
 		Condition:   condition,
 		Status:      Active,
 		Timestamp:   time.Now(),
+		EndTime:     time.Now(),
 	}
 
 	if err := auction.Validate(); err != nil {
@@ -47,6 +48,7 @@ type Auction struct {
 	Condition   ProductCondition
 	Status      AuctionStatus
 	Timestamp   time.Time
+	EndTime     time.Time
 }
 
 type ProductCondition int
@@ -55,6 +57,8 @@ type AuctionStatus int
 const (
 	Active AuctionStatus = iota
 	Completed
+	Open
+	Closed
 )
 
 const (
@@ -75,4 +79,8 @@ type AuctionRepositoryInterface interface {
 
 	FindAuctionById(
 		ctx context.Context, id string) (*Auction, *internal_error.InternalError)
+
+	CloseExpiredAuctions(ctx context.Context) *internal_error.InternalError
+
+	UpdateAuction(ctx context.Context, auctionEntity *Auction) *internal_error.InternalError
 }

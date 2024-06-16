@@ -5,6 +5,7 @@ import (
 	"fullcycle-auction_go/configuration/logger"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"log"
 	"os"
 )
 
@@ -16,6 +17,9 @@ const (
 func NewMongoDBConnection(ctx context.Context) (*mongo.Database, error) {
 	mongoURL := os.Getenv(MONGODB_URL)
 	mongoDatabase := os.Getenv(MONGODB_DB)
+
+	log.Println("mongoURL:", mongoURL)
+	log.Println("mongoDatabase:", mongoDatabase)
 
 	client, err := mongo.Connect(
 		ctx, options.Client().ApplyURI(mongoURL))

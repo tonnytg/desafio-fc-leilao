@@ -6,6 +6,7 @@ import (
 	"fullcycle-auction_go/internal/entity/bid_entity"
 	"fullcycle-auction_go/internal/internal_error"
 	"fullcycle-auction_go/internal/usecase/bid_usecase"
+	"log"
 	"time"
 )
 
@@ -56,6 +57,10 @@ type AuctionUseCaseInterface interface {
 	FindWinningBidByAuctionId(
 		ctx context.Context,
 		auctionId string) (*WinningInfoOutputDTO, *internal_error.InternalError)
+
+	CloseExpiredAuctions(ctx context.Context) *internal_error.InternalError
+
+	CloseExpiredAuctionById(ctx context.Context, id string) *internal_error.InternalError
 }
 
 type ProductCondition int64
@@ -77,6 +82,8 @@ func (au *AuctionUseCase) CreateAuction(
 	if err != nil {
 		return err
 	}
+
+	log.Println("AuctionUseCase - acionado o CreateAuction")
 
 	if err := au.auctionRepositoryInterface.CreateAuction(
 		ctx, auction); err != nil {

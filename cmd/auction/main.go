@@ -15,16 +15,24 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.uber.org/zap"
 	"log"
+	"os"
+	"os/signal"
+	"syscall"
 )
 
 func main() {
-	ctx := context.Background()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
 	if err := godotenv.Load("cmd/auction/.env"); err != nil {
 		log.Fatal("Error trying to load env variables")
 		return
 	}
+
+	logger, _ := zap.NewProduction()
+	defer logger.Sync()
 
 	databaseConnection, err := mongodb.NewMongoDBConnection(ctx)
 	if err != nil {
@@ -34,7 +42,12 @@ func main() {
 
 	router := gin.Default()
 
-	userController, bidController, auctionsController := initDependencies(databaseConnection)
+	userController, bidController, auctionsController := initDependencies(databaseConnection, logger)
+
+	// Create a Loop to check Auctions is expired
+	go func() {
+		auctionsController.CloseExpiredAuctions(ctx)
+	}()
 
 	router.GET("/auction", auctionsController.FindAuctions)
 	router.GET("/auction/:auctionId", auctionsController.FindAuctionById)
@@ -44,10 +57,23 @@ func main() {
 	router.GET("/bid/:auctionId", bidController.FindBidByAuctionId)
 	router.GET("/user/:userId", userController.FindUserById)
 
-	router.Run(":8080")
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
+
+	go func() {
+		<-sigCh
+		log.Println("Shutting down server...")
+		cancel()
+		os.Exit(0)
+	}()
+
+	if err := router.Run(":8080"); err != nil {
+		log.Fatalf("Failed to run server: %v", err)
+	}
+
 }
 
-func initDependencies(database *mongo.Database) (
+func initDependencies(database *mongo.Database, logger *zap.Logger) (
 	userController *user_controller.UserController,
 	bidController *bid_controller.BidController,
 	auctionController *auction_controller.AuctionController) {
@@ -59,7 +85,7 @@ func initDependencies(database *mongo.Database) (
 	userController = user_controller.NewUserController(
 		user_usecase.NewUserUseCase(userRepository))
 	auctionController = auction_controller.NewAuctionController(
-		auction_usecase.NewAuctionUseCase(auctionRepository, bidRepository))
+		auction_usecase.NewAuctionUseCase(auctionRepository, bidRepository), logger)
 	bidController = bid_controller.NewBidController(bid_usecase.NewBidUseCase(bidRepository))
 
 	return

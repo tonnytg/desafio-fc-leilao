@@ -5,6 +5,8 @@ import (
 	"fullcycle-auction_go/configuration/logger"
 	"fullcycle-auction_go/internal/entity/auction_entity"
 	"fullcycle-auction_go/internal/internal_error"
+	"go.mongodb.org/mongo-driver/bson"
+	"log"
 
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -17,6 +19,7 @@ type AuctionEntityMongo struct {
 	Condition   auction_entity.ProductCondition `bson:"condition"`
 	Status      auction_entity.AuctionStatus    `bson:"status"`
 	Timestamp   int64                           `bson:"timestamp"`
+	EndTime     int64                           `bson:"end_time"`
 }
 type AuctionRepository struct {
 	Collection *mongo.Collection
@@ -39,12 +42,32 @@ func (ar *AuctionRepository) CreateAuction(
 		Condition:   auctionEntity.Condition,
 		Status:      auctionEntity.Status,
 		Timestamp:   auctionEntity.Timestamp.Unix(),
+		EndTime:     auctionEntity.EndTime.Unix(),
 	}
-	_, err := ar.Collection.InsertOne(ctx, auctionEntityMongo)
+
+	log.Println("AuctionRepository - CreateAuction in MongoDB")
+	InsertOneResult, err := ar.Collection.InsertOne(ctx, auctionEntityMongo)
 	if err != nil {
 		logger.Error("Error trying to insert auction", err)
 		return internal_error.NewInternalServerError("Error trying to insert auction")
 	}
 
+	log.Println("AuctionRepository - return of CreateAuction - InsertOneResult:", InsertOneResult.InsertedID)
+
+	return nil
+}
+
+func (ar *AuctionRepository) UpdateAuction(ctx context.Context, auctionEntity *auction_entity.Auction) *internal_error.InternalError {
+	filter := bson.M{"_id": auctionEntity.Id}
+	update := bson.M{"$set": bson.M{
+		"status":    auctionEntity.Status,
+		"end_time":  auctionEntity.EndTime.Unix(),
+		"timestamp": auctionEntity.Timestamp.Unix(),
+	}}
+
+	_, err := ar.Collection.UpdateOne(ctx, filter, update)
+	if err != nil {
+		return internal_error.NewInternalServerError("Error updating auction")
+	}
 	return nil
 }

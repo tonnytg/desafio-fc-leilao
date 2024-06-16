@@ -29,6 +29,7 @@ func (ar *AuctionRepository) FindAuctionById(
 		Condition:   auctionEntityMongo.Condition,
 		Status:      auctionEntityMongo.Status,
 		Timestamp:   time.Unix(auctionEntityMongo.Timestamp, 0),
+		EndTime:     time.Unix(auctionEntityMongo.Timestamp, 0),
 	}, nil
 }
 
@@ -39,7 +40,7 @@ func (repo *AuctionRepository) FindAuctions(
 	productName string) ([]auction_entity.Auction, *internal_error.InternalError) {
 	filter := bson.M{}
 
-	if status != 0 {
+	if status != -1 {
 		filter["status"] = status
 	}
 
@@ -74,6 +75,7 @@ func (repo *AuctionRepository) FindAuctions(
 			Description: auction.Description,
 			Condition:   auction.Condition,
 			Timestamp:   time.Unix(auction.Timestamp, 0),
+			EndTime:     time.Unix(auction.Timestamp, 0),
 		})
 	}
 

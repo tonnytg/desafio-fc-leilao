@@ -1,0 +1,15 @@
+### GET Active Auction
+GET http://localhost:8080/auction?status=0
+Accept: application/json
+
+### CREATE Auction
+POST http://localhost:8080/auction
+Content-Type: application/json
+Accept: application/json
+
+{
+  "product_name": "oranges",
+  "category": "fruits",
+  "description": "test this api to create auctions to solve problem about trigger to close auctions automatic",
+  "condition": 0
+}
