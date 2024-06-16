@@ -26,6 +26,17 @@ Example:
 
 Run command `make`
 
+### To run test
+
+Run `make` first up database
+This project don't has mock
+
+`go test -v internal/infra/database/auction/create_auction_test.go`
+
+or
+
+`make test`
+
 ## Requiremens
 
 - Go
